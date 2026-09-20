@@ -101,7 +101,7 @@ document.addEventListener('click', async event => {
   };
   originalButton.disabled = true;
   button.disabled = true;
-  notify('Saving favorite and staging its image and recipe in Git…');
+  notify('Saving favorite…');
   try {
     const response = await fetch('/api/favorite', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Glitch-Lab': '1' }, body: JSON.stringify({ batch: originalButton.dataset.batch, index: Number(originalButton.dataset.index) }) });
     const result = await response.json();
@@ -115,8 +115,8 @@ document.addEventListener('click', async event => {
     thumbnail.dataset.original = favoriteUrl;
     thumbnail.src = `/thumb${favoriteUrl}`;
     card.querySelector('.tag').textContent = 'FAVORITE';
-    originalButton.textContent = result.warning ? 'Saved · retry staging' : 'Saved · stage again';
-    notify(result.warning || 'Favorite saved. The image and recipe are staged in Git; no commit was created.');
+    originalButton.textContent = 'Saved';
+    notify('Favorite saved with its recipe.');
   } catch (error) {
     notify(error.message || 'Start the local helper with npm start to save favorites.');
   } finally {

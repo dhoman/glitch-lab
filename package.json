@@ -2,7 +2,7 @@
   "name": "glitch-lab",
   "version": "1.0.0",
   "private": true,
-  "description": "A local JPEG glitch studio with reproducible batches and Git-backed favorites",
+  "description": "A local JPEG glitch studio with reproducible batches and local favorites",
   "scripts": {
     "start": "node server.js --open",
     "serve": "node server.js",

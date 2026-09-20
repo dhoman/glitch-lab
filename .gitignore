@@ -2,5 +2,5 @@ node_modules/
 .DS_Store
 images/
 generatedimages/
-favorites/index.html
+favorites/
 *.log

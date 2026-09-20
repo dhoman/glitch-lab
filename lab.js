@@ -1,12 +1,9 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { createHash, randomBytes } = require('node:crypto');
-const { execFile } = require('node:child_process');
-const { promisify } = require('node:util');
 const sharp = require('sharp');
 const { glitchBytes } = require('./glitch');
 const views = require('./views');
-const exec = promisify(execFile);
 const supported = /\.(jpe?g|png|webp|avif|tiff?|gif)$/i;
 const hash = value => createHash('sha256').update(value).digest('hex');
 const safeName = value => path.basename(value).replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^\.+/, '') || 'image';
@@ -201,11 +198,7 @@ function createLab(root) {
     }
     await renderBatch({ id: batchId, ...manifest });
     await fs.writeFile(path.join(favorites, 'index.html'), views.favorites(await listFavorites()));
-    let staged = true;
-    let warning;
-    try { await exec('git', ['add', '--', path.relative(root, imagePath), path.relative(root, metadataPath)], { cwd: root }); }
-    catch (error) { staged = false; warning = `Favorite saved, but Git staging failed: ${error.stderr || error.message}. Retry Save favorite or run git add favorites.`; }
-    return { id, staged, warning };
+    return { id };
   }
   return { root, images, generated, favorites, init, inside, collect, importImage, listImages, batches, listFavorites, refresh, generate, favorite };
 }

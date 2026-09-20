@@ -1,7 +1,7 @@
 # Glitch lab
 
 A local image studio for JPEG glitch experiments. Choose images or a folder, adjust
-parameters, browse batches, and save favorites with their recipes in Git.
+parameters, browse batches, and save favorites with their recipes.
 
 ## Start
 
@@ -11,12 +11,12 @@ npm install
 npm start
 ```
 
-Requires Node 22 or newer and Git. The browser opens at `http://127.0.0.1:4177`.
+Requires Node 22 or newer. The browser opens at `http://127.0.0.1:4177`.
 Stop with Ctrl+C. Use `PORT=4180 npm start` to choose another port, or `npm run serve`
 to start without opening a browser.
 
 The interface is plain HTML, CSS, and JavaScript. A small Node helper handles local
-files, Sharp image processing, and Git staging. It listens on loopback only. Nothing
+files and Sharp image processing. It listens on loopback only. Nothing
 is hosted or deployed. Open the localhost URL while the helper is running.
 
 ## Use the studio
@@ -30,14 +30,13 @@ is hosted or deployed. Open the localhost URL while the helper is running.
    Save favorite, and Download. Browse with Previous/Next or the arrow keys; close
    with Escape or Close. The same preview works on the Favorites page.
 5. Choose **Save favorite**. The image moves to `favorites/<id>/`, accompanied by
-   `metadata.json`. Both files are staged with `git add`. Saving does not commit or push.
+   `metadata.json`. Favorites stay on this machine; Git ignores the folder.
 6. Use Create, Batches, and Favorites in the navigation to move around.
 
 The batch keeps a link to a moved favorite. Favorites show the same four glitch
 parameters plus the random seed and width, and link to their full recipe. A favorite
 survives deletion of its original batch; its Batch link needs that local batch to exist.
-Repeated saves are safe. If Git staging fails, the favorite remains saved and the UI
-explains how to retry. Downloads alone do not create favorites or stage files.
+Repeated saves are safe. Downloads alone do not create favorites.
 
 ## Repository layout
 
@@ -49,23 +48,18 @@ generatedimages/                   ignored experiments
       0001.png
       index.html
       manifest.json
-favorites/                         images and recipes included in Git
+favorites/                         ignored images and recipes
   <favorite id>/
     0001.png
     metadata.json
-  index.html                       ignored; regenerated on startup/save
+  index.html                       regenerated on startup/save
 public/                            HTML, CSS, browser JavaScript
 ```
 
-Input and batch folders are created on startup and ignored by default. Source
+Input, batch, and favorites folders are created on startup and ignored by Git. Source
 names plus content hashes prevent collisions. Favorite IDs distinguish batches
-and variations. The generated Favorites index is rebuilt from metadata, including
-after cloning the repository. Review and commit your staged favorites normally:
-
-```sh
-git status
-git commit -m "Save favorite glitches"
-```
+and variations. The generated Favorites index is rebuilt from metadata. Back up
+`favorites/` yourself if you want to keep it beyond this machine.
 
 ## CLI
 
@@ -124,4 +118,4 @@ npm test
 ```
 
 Tests cover byte compatibility, reproducible generation, input isolation, image moves,
-metadata preservation, Git staging, HTTP endpoints, and rejected cross-origin writes.
+metadata preservation, Git ignore rules, HTTP endpoints, and rejected cross-origin writes.

@@ -22,8 +22,8 @@ const help = `Glitch lab CLI
   --help               Show this help
 
 Defaults to images/. Results go under generatedimages/<source>/<batch>/.
-Use the studio's Save favorite button to move an image and recipe into favorites/
-and stage them in Git. No commits are created automatically.
+Use the studio's Save favorite button to move an image and recipe into favorites/.
+Favorites stay local and are ignored by Git.
 `;
 async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: {

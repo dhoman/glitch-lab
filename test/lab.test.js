@@ -17,7 +17,7 @@ async function fixture(t) {
   const lab = createLab(root);
   await lab.init();
   await exec('git', ['init', '-q', root]);
-  await fs.writeFile(path.join(root, '.gitignore'), 'images/\ngeneratedimages/\nfavorites/index.html\n');
+  await fs.writeFile(path.join(root, '.gitignore'), 'images/\ngeneratedimages/\nfavorites/\n');
   const buffer = await sharp({ create: { width: 120, height: 80, channels: 3, background: '#91a47f' } }).png().toBuffer();
   const id = await lab.importImage('photo.png', buffer);
   return { root, lab, buffer, id };
@@ -41,7 +41,7 @@ test('byte algorithm matches original worker for 45 parameter combinations', asy
   }
 });
 
-test('generation is reproducible; favorite moves image, retains recipe, and stages only favorite files', async t => {
+test('generation is reproducible; favorite moves image, retains recipe, and stages nothing in Git', async t => {
   const { root, lab, id, buffer } = await fixture(t);
   const input = await lab.inside(lab.images, id);
   const settings = { count: 2, iterations: 1, seed: 80, amount: 20, randomSeed: 'repeat', maxWidth: 80 };
@@ -54,7 +54,6 @@ test('generation is reproducible; favorite moves image, retains recipe, and stag
   assert.equal((await sharp(bytes).metadata()).width, 80);
   const before = (await lab.batches()).find(b => b.id === first.batches[0]);
   const result = await lab.favorite(first.batches[0], 1);
-  assert.equal(result.staged, true);
   await assert.rejects(fs.access(image), { code: 'ENOENT' });
   const favorites = await lab.listFavorites();
   assert.equal(favorites.length, 1);
@@ -64,8 +63,7 @@ test('generation is reproducible; favorite moves image, retains recipe, and stag
   assert.deepEqual(bytes, await fs.readFile(path.join(lab.favorites, result.id, '0001.png')));
   assert.deepEqual(await fs.readFile(input), buffer);
   assert.equal((await lab.favorite(first.batches[0], 1)).id, result.id);
-  const staged = (await exec('git', ['diff', '--cached', '--name-only'], { cwd: root })).stdout.trim().split('\n');
-  assert.deepEqual(staged.sort(), [`favorites/${result.id}/0001.png`, `favorites/${result.id}/metadata.json`]);
+  assert.equal((await exec('git', ['diff', '--cached', '--name-only'], { cwd: root })).stdout, '');
   const html = await fs.readFile(path.join(lab.generated, first.batches[0], 'index.html'), 'utf8');
   assert(html.includes(`favorites/${result.id}/0001.png`));
   await fs.rm(path.join(lab.generated, first.batches[0]), { recursive: true });
@@ -74,7 +72,7 @@ test('generation is reproducible; favorite moves image, retains recipe, and stag
   assert((await fs.readFile(path.join(lab.favorites, 'index.html'), 'utf8')).includes(`${result.id}/metadata.json`));
 });
 
-test('invalid controls and paths rejected; inputs and outputs ignored, favorites not ignored', async t => {
+test('invalid controls and paths rejected; inputs, outputs, and favorites ignored', async t => {
   const { root, lab, id } = await fixture(t);
   assert.throws(() => options({ iterations: '35:5' }), /maximum/);
   assert.throws(() => options({ count: 0 }), /count/);
@@ -82,9 +80,9 @@ test('invalid controls and paths rejected; inputs and outputs ignored, favorites
   await assert.rejects(lab.inside(lab.images, '../.gitignore'), /outside/);
   await fs.symlink(path.join(root, '.gitignore'), path.join(lab.images, 'outside.png'));
   await assert.rejects(lab.inside(lab.images, 'outside.png'), /outside/);
-  const ignored = (await exec('git', ['check-ignore', `images/${id}`, 'generatedimages/example.png'], { cwd: root })).stdout;
+  const ignored = (await exec('git', ['check-ignore', `images/${id}`, 'generatedimages/example.png', 'favorites/example/0001.png'], { cwd: root })).stdout;
   assert(ignored.includes('generatedimages/example.png'));
-  await assert.rejects(exec('git', ['check-ignore', 'favorites/example.png'], { cwd: root }), error => error.code === 1);
+  assert(ignored.includes('favorites/example/0001.png'));
 });
 
 test('local API imports, generates, favorites; blocks cross-origin writes and private files', async t => {
@@ -109,7 +107,7 @@ test('local API imports, generates, favorites; blocks cross-origin writes and pr
   assert.equal(job.state, 'done');
   assert.equal(job.failed, 0);
   const favorite = await (await post('/api/favorite', { batch: job.batches[0], index: 1 })).json();
-  assert.equal(favorite.staged, true);
+  assert(favorite.id);
   assert.equal((await fetch(`${url}/thumb/favorites/${favorite.id}/0001.png`)).status, 200);
   const catalog = await (await fetch(url + '/api/catalog')).json();
   assert.equal(catalog.favorites.length, 1);
