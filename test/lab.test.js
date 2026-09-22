@@ -9,6 +9,7 @@ const { execFile } = require('node:child_process');
 const sharp = require('sharp');
 const { createLab, options } = require('../lab');
 const { glitchBytes } = require('../glitch');
+const views = require('../views');
 const { start } = require('../server');
 const exec = promisify(execFile);
 async function fixture(t) {
@@ -66,10 +67,17 @@ test('generation is reproducible; favorite moves image, retains recipe, and stag
   assert.equal((await exec('git', ['diff', '--cached', '--name-only'], { cwd: root })).stdout, '');
   const html = await fs.readFile(path.join(lab.generated, first.batches[0], 'index.html'), 'utf8');
   assert(html.includes(`favorites/${result.id}/0001.png`));
+  const suffix = first.batches[0].split('/').pop().replace(/^batch-/, '');
+  assert(html.includes(`download="photo-${suffix}-0001.png"`), 'batch downloads carry source and batch');
+  assert(html.includes(`download="photo-${suffix}-0002.png"`));
+  assert.equal(views.downloadName('my photo.jpeg', 'x/batch-abc', '0003.jpg'), 'my_photo-abc-0003.jpg');
+  assert.equal(views.downloadName('0123456789ab-IMG_1.HEIC', 'x/batch-Zz9', '0001.png'), 'IMG_1-Zz9-0001.png');
   await fs.rm(path.join(lab.generated, first.batches[0]), { recursive: true });
   await lab.refresh();
   assert.equal((await lab.listFavorites()).length, 1);
-  assert((await fs.readFile(path.join(lab.favorites, 'index.html'), 'utf8')).includes(`${result.id}/metadata.json`));
+  const favoritesHtml = await fs.readFile(path.join(lab.favorites, 'index.html'), 'utf8');
+  assert(favoritesHtml.includes(`${result.id}/metadata.json`));
+  assert(favoritesHtml.includes(`download="photo-${suffix}-0001.png"`), 'favorite downloads keep the batch name');
 });
 
 test('invalid controls and paths rejected; inputs, outputs, and favorites ignored', async t => {

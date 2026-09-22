@@ -36,7 +36,8 @@ is hosted or deployed. Open the localhost URL while the helper is running.
 The batch keeps a link to a moved favorite. Favorites show the same four glitch
 parameters plus the random seed and width, and link to their full recipe. A favorite
 survives deletion of its original batch; its Batch link needs that local batch to exist.
-Repeated saves are safe. Downloads alone do not create favorites.
+Repeated saves are safe. Downloads alone do not create favorites. Downloads are named
+`<source>-<batch suffix>-<variation>.<ext>`, so images from different batches never collide.
 
 ## Repository layout
 
